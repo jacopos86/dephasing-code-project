@@ -140,10 +140,11 @@ class UnpertStruct:
 #  prepare the VASP displacement calculation
 #
 class DisplacedStructs:
-	def __init__(self, out_dir):
+	def __init__(self, out_dir, outcars_dir):
 		self.out_dir = out_dir + "/"
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
+		self.outcars_dir = outcars_dir
 	# set atomic displacement (angstrom)
 	def atom_displ(self, dr=np.array([0.1,0.1,0.1])):
 		self.dx = dr[0]

@@ -68,43 +68,44 @@ class gradient_ZFS:
 		return D
 	# set ZFS gradients
 	def set_tensor_gradient(self, displ_structs, unpert_struct, atoms_info, out_dir):
-		dr = np.array([displ_structs.dx, displ_structs.dy, displ_structs.dz])
 		Dc0= unpert_struct.Dtensor
-		jax = 0
 		# read data from atoms_info
 		f = open(atoms_info, 'r')
 		lines = f.readlines()
-		pert_dict = {}
+		self.pert_dict = {}
 		for line in lines:
 			l = line.split()
 			if int(l[0]) == 0 and int(l[1]) == 0:
-					default_dir = l[2]
+				self.default_dir = l[2]
 			else:
-				pert_dict[[int(l[0]), int(l[1])]] = l[2]
-		print(pert_dict)
+				self.pert_dict[(int(l[0]), int(l[1]))] = l[2]
+		jax = 0
+		# run over atoms
 		for ia in range(unpert_struct.nat):
 			for idx in range(3):
-				d = [-dr[idx], 0., dr[idx]]
-				print(d)
+				if (ia+1, idx+1) in self.pert_dict.keys():
+					outcars_dir = self.pert_dict[(ia+1, idx+1)]
+				else:
+					outcars_dir = self.default_dir
+				out_dir_full = ''
+				out_dir_full = out_dir + outcars_dir
+				# look for right displaced struct
+				for displ_struct in displ_structs:
+					if displ_struct.outcars_dir == out_dir_full:
+						dr = np.array([displ_struct.dx, displ_struct.dy, displ_struct.dz])
+						d = [-dr[idx], 0., dr[idx]]
+					else:
+						pass
+				out_dir_full = out_dir_full + "/"
+				# write file name
 				file_name = str(ia+1) + "-" + str(idx+1) + "-1/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
+				outcar = "{}".format(out_dir_full + file_name)
 				Dc1 = self.read_outcar_full(outcar)
 				#
 				file_name = str(ia+1) + "-" + str(idx+1) + "-2/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
+				outcar = "{}".format(out_dir_full + file_name)
 				Dc2 = self.read_outcar_full(outcar)
 				#
-				print(ia+1, idx+1)
-				D = [Dc2[1,2], Dc0[1,2], Dc1[1,2]]
-				model = np.polyfit(d, D, 2)
-				ffit = np.poly1d(model)
-				x_s = np.arange(d[0], d[2]+0.001, 0.001)
-				print(x_s)
-				#dffit_dx = ffit.deriv()
-				plt.scatter(d, D)
-				plt.plot(x_s, ffit(x_s), color="green")
-				#plt.plot(x_s, dffit_dx(x_s), color="blue")
-				plt.show()
 				self.gradDtensor[jax,0,0] = (Dc1[0,0] - Dc2[0,0]) / (2.*dr[idx])
 				self.gradDtensor[jax,1,1] = (Dc1[1,1] - Dc2[1,1]) / (2.*dr[idx])
 				self.gradDtensor[jax,2,2] = (Dc1[2,2] - Dc2[2,2]) / (2.*dr[idx])
@@ -118,6 +119,43 @@ class gradient_ZFS:
 				# MHz / Ang units
 				#
 				jax = jax + 1
+	def plot_tensor_grad_component(self, i1, i2, displ_structs, unpert_struct, out_dir):
+		Dc0= unpert_struct.Dtensor
+		# run over atoms
+		for ia in range(unpert_struct.nat):
+			for idx in range(3):
+				if (ia+1, idx+1) in self.pert_dict.keys():
+					outcars_dir = self.pert_dict[(ia+1, idx+1)]
+				else:
+					outcars_dir = self.default_dir
+				out_dir_full = ''
+				out_dir_full = out_dir + outcars_dir
+				# look for right displaced struct
+				for displ_struct in displ_structs:
+					if displ_struct.outcars_dir == out_dir_full:
+						dr = np.array([displ_struct.dx, displ_struct.dy, displ_struct.dz])
+						d = [-dr[idx], 0., dr[idx]]
+					else:
+						pass
+				out_dir_full = out_dir_full + "/"
+				# write file name
+				file_name = str(ia+1) + "-" + str(idx+1) + "-1/OUTCAR"
+				outcar = "{}".format(out_dir_full + file_name)
+				Dc1 = self.read_outcar_full(outcar)
+				#
+				file_name = str(ia+1) + "-" + str(idx+1) + "-2/OUTCAR"
+				outcar = "{}".format(out_dir_full + file_name)
+				Dc2 = self.read_outcar_full(outcar)
+				#
+				print(ia+1, idx+1)
+				D = [Dc2[i1,i2], Dc0[i1,i2], Dc1[i1,i2]]
+				model = np.polyfit(d, D, 2)
+				ffit = np.poly1d(model)
+				x_s = np.arange(d[0], d[2]+d[2], d[2])
+				plt.scatter(d, D)
+				plt.plot(x_s, ffit(x_s), color="green")
+				plt.show()
+	# method
 	# set grad D
 	def set_grad_D(self):
 		# D = 3/2 * Dzz

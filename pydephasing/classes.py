@@ -22,10 +22,6 @@ class TemperatureList:
 		self.temperatures = np.arange(self.Tin, self.Tfin+self.dT, self.dT)
 		self.N = len(self.temperatures)
 #
-#class GradZFS:
-#def __init__(self):
-#self.gradD = np.zeros(
-#
 class EnergyFluct:
 	def __init__(self, N):
 		self.deltaE = np.zeros(N, dtype=np.double)
