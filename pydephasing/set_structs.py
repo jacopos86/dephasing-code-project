@@ -140,7 +140,7 @@ class UnpertStruct:
 #  prepare the VASP displacement calculation
 #
 class DisplacedStructs:
-	def __init__(self, out_dir, outcars_dir):
+	def __init__(self, out_dir, outcars_dir=''):
 		self.out_dir = out_dir + "/"
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
