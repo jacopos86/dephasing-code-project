@@ -230,8 +230,10 @@ class gradient_HFI:
 		f.close()
 		return A
 	# set Ahfi gradient
-	def set_grad_Ahfi(self, displ_structs, nat, out_dir):
+	def set_grad_Ahfi(self, displ_structs, nat):
 		dr = np.array([displ_structs.dx, displ_structs.dy, displ_structs.dz])
+		out_dir = displ_structs.outcars_dir + "/"
+		# run over atoms
 		jax = 0
 		for ia in range(nat):
 			gradAxx = np.zeros((nat,3))

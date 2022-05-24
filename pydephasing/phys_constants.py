@@ -17,3 +17,6 @@ eps = 1.E-7
 # electron gyromagnetic ratio
 #
 gamma_e = 2.8*1.E-6               # THz / G
+#
+# nuclear gyromagnetic ratio
+#
