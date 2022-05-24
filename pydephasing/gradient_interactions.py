@@ -93,7 +93,7 @@ class gradient_ZFS:
 				for displ_struct in displ_structs:
 					if displ_struct.outcars_dir == out_dir_full:
 						dr = np.array([displ_struct.dx, displ_struct.dy, displ_struct.dz])
-						d = [-dr[idx], 0., dr[idx]]
+						# Ang units
 					else:
 						pass
 				out_dir_full = out_dir_full + "/"
