@@ -1,6 +1,7 @@
 import sys
 from pydephasing.create_displ_struct_files import gen_poscars
 from pydephasing.input_parameters import data_input
+from pydephasing.compute_zfs_dephas import compute_zfs_autocorrel_func
 #
 print("-------------------------------------------") 
 print("-------- START PYDEPHASING PROGRAM --------")
@@ -25,8 +26,39 @@ elif calc_type == "--spin":
         calc_type3 = sys.argv[3]
         # case 1) -> ZFS
         # case 2) -> HFI
+        a = int(sys.argv[4])
+        # action -> sys.argv[4]
+        # 1 -> no ph / atoms resolved calculation
+        # 2 -> atoms resolved calculation
+        # 3 -> ph resolved only
+        # 4 -> atoms + ph resolved calculation
+        if a == 1:
+            at_resolved = False
+            ph_resolved = False
+        elif a == 2:
+            at_resolved = True
+            ph_resolved = False
+        elif a == 3:
+            at_resolved = False
+            ph_resolved = True
+        elif a == 4:
+            at_resolved = True
+            ph_resolved = True
+        else:
+            print("----------wrong action flag------------")
+            print(-----------------"usage: ---------------")
+            print("1 -> no ph / atoms resolved calculation")
+            print("----2 -> atoms resolved calculation----")
+            print("--------3 -> ph resolved only----------")
+            print("--4 -> atoms + ph resolved calculation-")
+            sys.exit(1)
         if calc_type3 == "--zfs":
-            print("ok -> ready to go")
+            # read input file
+            input_file = sys.argv[5]
+            input_params = data_input()
+            input_params.read_data(input_file)
+            # compute auto correl. function first
+            compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved)
     elif calc_type2 == "--inhomo":
         print("-------------------------------------------")
         print("------- INHOMOGENEOUS CALCULATION ---------")
