@@ -1,6 +1,6 @@
 # This is the main subroutine for
 # the calculation of the ZFS dephasing
-# it computes computes the energy autocorrelation function
+# it computes the energy autocorrelation function
 # and return it for further processing
 import numpy as np
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs

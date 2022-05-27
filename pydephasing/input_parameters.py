@@ -12,6 +12,10 @@ class data_input():
         self.out_dir = ''
         # unperturbed directory calculation
         self.unpert_dir = ''
+        # GS unperturbed directory
+        self.unpert_dir_gs = ''
+        # EXC unperturbed directory
+        self.unpert_dir_exc = ''
         # perturbed calculations directory
         self.pert_dirs = []
         # perturbed calculations outcars directory
@@ -32,8 +36,12 @@ class data_input():
             l = line.split()
             if l[0] == "working_dir":
                 self.out_dir = l[2] + '/'
-            if l[0] == "unpert_data_dir":
+            elif l[0] == "unpert_data_dir":
                 self.unpert_dir = l[2]
+            elif l[0] == "unpert_gs_dir":
+                self.unpert_dir_gs = l[2]
+            elif l[0] == "unpert_exc_dir":
+                self.unpert_dir_exc = l[2]
             elif l[0] == "dir_first_order_displ":
                 for i in range(2, len(l)):
                     self.pert_dirs.append(l[i])
