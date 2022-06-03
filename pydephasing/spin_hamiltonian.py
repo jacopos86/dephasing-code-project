@@ -96,6 +96,7 @@ class spin_hamiltonian:
 				E_gD[jax] = np.dot(qs.conjugate(), r).real
 				#
 				jax = jax+1
+		# THz / Ang units
 		return E_gD
 	def set_SDS(self, unprt_struct):
 		Ddiag = unprt_struct.Ddiag*2.*np.pi*1.E-6
@@ -120,15 +121,14 @@ class spin_hamiltonian:
 		# compute grad Ess
 		# gradient of the energy of the spin system
 		self.grad_Ess = np.zeros(3*nat)
-		# compute : grad D < qs | [Sz^2 - S(S+1)/3] | qs >
-		#E_D = self.set_D_coef(qs)
-		#self.grad_Ess[:] = lambda_coef[0] * E_D * gradZFS.gradD[:]
-		# compute : grad E < qs |(Sx^2 - Sy^2)| qs >
-		#E_E = self.set_E_coef(qs)
-		#self.grad_Ess[:] = self.grad_Ess[:] + lambda_coef[0] * E_E * gradZFS.gradE[:]
+		#
+		# compute : grad D < qs | S gradD S | qs >
+		#
 		E_gD = self.set_gD_coef(gradZFS, nat, qs)
 		self.grad_Ess[:] = self.grad_Ess[:] + lambda_coef[0] * E_gD[:]
+		#
 		# compute : \sum_i^N I_i grad Ahfi(i) < qs | S | qs >
+		#
 		E_A = self.set_A_coef(qs)
 		for isp in range(spin_config.nsp):
 			Ii = spin_config.nuclear_spins[isp]['I']
@@ -140,24 +140,21 @@ class spin_hamiltonian:
 				# matrix product
 				gAS = np.dot(gax_Ahfi, E_A)
 				self.grad_Ess[jax] = self.grad_Ess[jax] + lambda_coef[1] * np.dot(Ii, gAS)
+		# THz / Ang units (energy)
+		self.grad_Ess[:] = self.grad_Ess[:] * 2.*np.pi
 	def set_grad_deltaEss(self, gradZFS, gradHFI, spin_config, qs1, qs2, nat, lambda_coef):
 		# compute grad delta Ess
 		# gradient of the spin state energy difference
 		self.grad_deltaEss = np.zeros(3*nat)
-		# compute : grad D < qs | [Sz^2 - S(S+1)/3] | qs >
-		#E_D1 = self.set_D_coef(qs1)
-		#E_D2 = self.set_D_coef(qs2)
-		#dE_D = E_D1 - E_D2
-		#self.grad_deltaEss[:] = lambda_coef[0] * dE_D * gradZFS.gradD[:]
-		# compute : grad E < qs |(Sx^2 - Sy^2)| qs >
-		#E_E1 = self.set_E_coef(qs1)
-		#E_E2 = self.set_E_coef(qs2)
-		#dE_E = E_E1 - E_E2
+		#
+		# compute : grad D < qs | S gradD S | qs >
+		#
 		E_gD1 = self.set_gD_coef(gradZFS, nat, qs1)
 		E_gD2 = self.set_gD_coef(gradZFS, nat, qs2)
 		self.grad_deltaEss[:] = self.grad_deltaEss[:] + lambda_coef[0] * (E_gD1[:] - E_gD2[:])
-		#self.grad_deltaEss[:] = self.grad_deltaEss[:] + lambda_coef[0] * dE_E * gradZFS.gradE[:]
+		#
 		# compute : \sum_i^N I_i grad Ahfi(i) < qs | S | qs >
+		#
 		E_A1 = self.set_A_coef(qs1)
 		E_A2 = self.set_A_coef(qs2)
 		dE_A = E_A1 - E_A2
@@ -171,6 +168,8 @@ class spin_hamiltonian:
 				# product
 				gAS = np.dot(gax_Ahfi, dE_A)
 				self.grad_deltaEss[jax] = self.grad_deltaEss[jax] + lambda_coef[1] * np.dot(Ii, gAS)
+		# THz / Ang units (energy)
+		self.grad_deltaEss[:] = self.grad_deltaEss[:] * 2.*np.pi
 	def set_time(self, dt, T):
 		# set time in ps units
 		# for spin vector evolution

@@ -68,7 +68,6 @@ class gradient_ZFS:
 		return D
 	# set ZFS gradients
 	def set_tensor_gradient(self, displ_structs, unpert_struct, atoms_info, out_dir):
-		Dc0= unpert_struct.Dtensor
 		# read data from atoms_info
 		f = open(atoms_info, 'r')
 		lines = f.readlines()
@@ -155,12 +154,62 @@ class gradient_ZFS:
 				plt.scatter(d, D)
 				plt.plot(x_s, ffit(x_s), color="green")
 				plt.show()
+	def write_Dtensor_to_file(self, out_dir):
+		# n. dof
+		nm = self.gradDtensor.shape[0]
+		# write data on file
+		file_name = "Dtensor_xx"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,0,0])
+		f.close()
+		# write data on file
+		file_name = "Dtensor_xy"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f.write("# jax          THz/Ang\n")
+		f = open(out_file, 'w')
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,0,1])
+		f.close()
+		# write data on file
+		file_name = "Dtensor_yy"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f.write("# jax          THz/Ang\n")
+		f = open(out_file, 'w')
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,1,1])
+		f.close()
+		# write data on file
+		file_name = "Dtensor_xz"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,0,2])
+		f.close()
+		# write data on file
+		file_name = "Dtensor_yz"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f.write("# jax          THz/Ang\n")
+		f = open(out_file, 'w')
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,1,2])
+		f.close()
+		# write data on file
+		file_name = "Dtensor_zz"
+		out_file = "{}".format(out_dir + '/' + file_name)
+		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
+		for jax in range(nm):
+			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,2,2])
+		f.close()
 	# method
 	# set grad D
 	def set_grad_D(self):
 		# D = 3/2 * Dzz
-		self.gradD[:] = 3./2 * self.gradDzz[:]
-		self.gradD[:] = self.gradD[:] * 1.E-6
+		self.gradD[:] = 3./2 * self.U_gradD_U[:,2,2]
 		#
 		#  (THz/Ang) units
 		#
@@ -171,13 +220,12 @@ class gradient_ZFS:
 		D = unpert_struct.Ddiag
 		if abs(D[0] - D[1]) < eps:
 			sgn = math.copysign(1, D[0]-D[1])
-			self.gradE[:] = sgn * (self.gradDxx[:] - self.gradDyy[:]) / 2.
+			self.gradE[:] = sgn * (self.U_gradD_U[:,0,0] - self.U_gradD_U[:,1,1]) / 2.
 		else:
-			self.gradE[:] = (D[0]-D[1]) / (2.*abs(D[0]-D[1])) * (self.gradDxx[:] - self.gradDyy[:])
+			self.gradE[:] = (D[0]-D[1]) / (2.*abs(D[0]-D[1])) * (self.U_gradD_U[:,0,0] - self.U_gradD_U[:,1,1])
 		#
 		#  (THz/Ang) units
 		#
-		self.gradE[:] = self.gradE[:] * 1.E-6
 	# set grad D tensor
 	def set_grad_D_tensor(self, unpert_struct):
 		# gradD = U^+ gD U
@@ -194,10 +242,10 @@ class gradient_ZFS:
 				Dt = np.matmul(U.transpose(), DU)
 				self.U_gradD_U[jax,:,:] = Dt[:,:]
 				jax = jax+1
+		self.U_gradD_U[:,:,:] = self.U_gradD_U[:,:,:] * 1.E-6
 		#
 		#   (THz/Ang)  units
 		#
-		self.U_gradD_U[:,:,:] = self.U_gradD_U[:,:,:] * 1.E-6
 #
 #   class :
 #   gradient hyperfine interaction
@@ -313,7 +361,7 @@ class gradient_HFI:
 #
 class gradient_Eg:
 	def __init__(self,nat):
-		self.gradEg = np.zeros(3*nat)
+		self.gradE = np.zeros(3*nat)
 	# read outcar file
 	def read_outcar(self, outcar):
 		# read file
@@ -325,28 +373,26 @@ class gradient_Eg:
 				E = float(l[4])   # eV
 		return E
 	# compute grad E
-	def set_gradE(self, displ_structs, nat, out_dir):
+	def set_gradE(self, displ_structs, nat):
 		dr = np.array([displ_structs.dx, displ_structs.dy, displ_structs.dz])
+		# OUTCAR directory
+		out_dir = displ_structs.outcars_dir
 		# compute grad E
-		gradE = np.zeros(3*nat)
+		gE = np.zeros(3*nat)
 		jax = 0
 		for ia in range(nat):
 			for idx in range(3):
 				file_name = str(ia+1) + "-" + str(idx+1) + "-1/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
+				outcar = "{}".format(out_dir + '/' + file_name)
 				E_1 = self.read_outcar(outcar)
 				#
 				file_name = str(ia+1) + "-" + str(idx+1) + "-2/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
+				outcar = "{}".format(out_dir + '/' + file_name)
 				E_2 = self.read_outcar(outcar)
 				#
-				gradE[jax] = (E_1 - E_2) / (2.*dr[idx])
-		return gradE
-	# compute grad gap energy
-	def set_gradEg(self, displ_structs, nat, out_dir0, out_dir1):
-		# compute grad E0
-		gradE0 = self.set_gradE(displ_structs, nat, out_dir0)
-		# compute grad E1
-		gradE1 = self.set_gradE(displ_structs, nat, out_dir1)
-		# eV units
-		self.gradEg[:] = gradE1[:] - gradE0[:]
+				gE[jax] = (E_1 - E_2) / (2.*dr[idx])
+				#
+				# eV / Ang units
+				#
+				jax = jax + 1
+		self.gradE[:] = gE[:]

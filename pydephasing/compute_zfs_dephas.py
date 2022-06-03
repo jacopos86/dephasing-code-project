@@ -5,6 +5,7 @@
 import numpy as np
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs
 from pydephasing.gradient_interactions import gradient_ZFS
+from pydephasing.autocorrel_module import autocorrelation_function
 #
 def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved):
     # input_params: input parameters object
@@ -31,4 +32,8 @@ def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved):
     gradZFS.set_tensor_gradient(struct_list, struct0, input_params.grad_info, input_params.out_dir)
     # set ZFS gradient in quant. axis coordinates
     gradZFS.set_grad_D_tensor(struct0)
-    # compute energy fluctuations
+    # set the energy difference gradient
+    
+    # compute auto-correlation function
+    acf = autocorrelation_function(at_resolved, ph_resolved, nat, input_params)
+    acf.compute_autocorrel_func(input_params)
