@@ -118,7 +118,7 @@ class gradient_ZFS:
 				# MHz / Ang units
 				#
 				jax = jax + 1
-	def plot_tensor_grad_component(self, i1, i2, displ_structs, unpert_struct, out_dir):
+	def plot_tensor_grad_component(self, displ_structs, unpert_struct, out_dir):
 		Dc0= unpert_struct.Dtensor
 		# run over atoms
 		for ia in range(unpert_struct.nat):
@@ -147,12 +147,26 @@ class gradient_ZFS:
 				Dc2 = self.read_outcar_full(outcar)
 				#
 				print(ia+1, idx+1)
-				D = [Dc2[i1,i2], Dc0[i1,i2], Dc1[i1,i2]]
-				model = np.polyfit(d, D, 2)
-				ffit = np.poly1d(model)
+				Dxy = [Dc2[0,1], Dc0[0,1], Dc1[0,1]]
+				Dxz = [Dc2[0,2], Dc0[0,2], Dc1[0,2]]
+				Dyz = [Dc2[1,2], Dc0[1,2], Dc1[1,2]]
+				modelxy = np.polyfit(d, Dxy, 2)
+				modelxz = np.polyfit(d, Dxz, 2)
+				modelyz = np.polyfit(d, Dyz, 2)
+				ffitxy = np.poly1d(modelxy)
+				ffitxz = np.poly1d(modelxz)
+				ffityz = np.poly1d(modelyz)
 				x_s = np.arange(d[0], d[2]+d[2], d[2])
-				plt.scatter(d, D)
-				plt.plot(x_s, ffit(x_s), color="green")
+				plt.scatter(d, Dxy, c='k')
+				plt.plot(x_s, ffitxy(x_s), color="k")
+				plt.show()
+				#
+				plt.scatter(d, Dyz, c='r')
+				plt.plot(x_s, ffityz(x_s), color="r")
+				plt.show()
+				#
+				plt.scatter(d, Dxz, c='b')
+				plt.plot(x_s, ffitxz(x_s), color="b")
 				plt.show()
 	def write_Dtensor_to_file(self, out_dir):
 		# n. dof
