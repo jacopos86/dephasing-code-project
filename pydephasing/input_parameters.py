@@ -88,6 +88,12 @@ class data_input():
                 self.T = float(l[2])
             elif l[0] == 'dt':
                 self.dt = float(l[2])
+            elif l[0] == 'T2':
+                self.T2 = float(l[2])
+            elif l[0] == 'dt2':
+                self.dt2 = float(l[2])
+            elif l[0] == 'nlags':
+                self.nlags = int(l[2])
             # temperature
             elif l[0] == 'Tin':
                 Tin = float(l[2])
@@ -95,12 +101,16 @@ class data_input():
                 Tfin = float(l[2])
             elif l[0] == "dTmp":
                 dTmp = float(l[2])
+        f.close()
         # set atom displ. list
         for i in range(len(dx)):
             self.atoms_displ.append(np.array([dx[i], dy[i], dz[i]]))
-        f.close()
         # set time array length
         self.nt = int(self.T / self.dt)
+        self.nt2= int(self.T2 / self.dt2)
+        # set time arrays
+        self.time = np.linspace(0., self.T, self.nt)
+        self.time2 = np.linspace(0., self.T2, self.nt2)
         # set temperature list
         self.ntmp = 1 + int((Tfin - Tin) / dTmp)
         self.temperatures = np.zeros(self.ntmp)

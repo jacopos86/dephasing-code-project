@@ -5,7 +5,6 @@
 import numpy as np
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs
 from pydephasing.gradient_interactions import gradient_ZFS
-from pydephasing.autocorrel_module import autocorrelation_function
 from pydephasing.spin_hamiltonian import spin_hamiltonian
 #
 def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved):

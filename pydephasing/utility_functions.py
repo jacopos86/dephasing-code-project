@@ -1,6 +1,6 @@
 import numpy as np
 from math import exp
-from pydephasing.phys_constants import eps, kb
+from pydephasing.phys_constants import eps, kb, hbar
 import sys
 #
 # utility functions module
@@ -123,3 +123,19 @@ def triplet_evolution(Ht, psi0, dt):
 		K4 = dt * F4
 		psit[:,i+1] = v[:] + (K1[:] + 2.*K2[:] + 2.*K3[:] + K4[:]) / 6.
 	return psit
+#
+# function 8)
+#
+def compute_index_to_ia_map(nat):
+	index_to_ia_map = np.zeros(3*nat, dtype=int)
+	for jax in range(3*nat):
+		index_to_ia_map[jax] = int(jax/3) + 1
+	return index_to_ia_map
+#
+# function 9)
+#
+def compute_index_to_idx_map(nat):
+	index_to_idx_map = np.zeros(3*nat, dtype=int)
+	for jax in range(3*nat):
+		index_to_idx_map[jax] = jax%3
+	return index_to_idx_map
