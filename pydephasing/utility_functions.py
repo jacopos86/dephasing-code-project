@@ -18,6 +18,17 @@ import sys
 # 6) set cross product matrix
 #    input : a
 #    output : [a] : axv = [a]v
+# 7) triplet state evolution
+#    input : Ht, psi0, dt
+#    output : psit
+# 8) compute index to ia map
+# 9) compute index to idx map
+# 10)compute T2
+#    input : t, Ct, D2
+#    output: tauc, T2_inv, [exp. fit]
+# 11)compute T2
+#    input : t, Ct, D2
+#    output: tauc, T2_inv, [expsin, fit]
 #
 #  function 1)
 #
@@ -139,3 +150,21 @@ def compute_index_to_idx_map(nat):
 	for jax in range(3*nat):
 		index_to_idx_map[jax] = jax%3
 	return index_to_idx_map
+#
+# function 10)
+#
+def extract_T2_Exp(t, Ct, D2):
+	# t : time array
+	# Ct : acf
+	# D2 : Delta^2
+	#
+	# fit over exp. function
+	def Exp(x, c):
+		return np.exp(-c * x)
+	# e^-g(t) -> g(t)=D2*tau_c^2[e^(-t/tau_c)+t/tau_c-1]
+	# D2 -> eV^2
+	# tau_c -> ps
+	def exp_gt(x, D2, tau_c):
+		r = np.exp(-gt(x, D2, tau_c))
+		return r
+	# gt function

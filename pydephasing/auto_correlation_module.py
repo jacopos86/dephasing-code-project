@@ -4,6 +4,7 @@
 # auto correlation function
 #
 import numpy as np
+import statsmodels.api as sm
 #
 class autocorrel_func:
     # initialization
