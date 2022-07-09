@@ -6,6 +6,7 @@
 #   3) class: gradient ZPL
 #
 import numpy as np
+import math
 from pydephasing.phys_constants import eps
 import matplotlib.pyplot as plt
 #
@@ -182,16 +183,16 @@ class gradient_ZFS:
 		# write data on file
 		file_name = "Dtensor_xy"
 		out_file = "{}".format(out_dir + '/' + file_name)
-		f.write("# jax          THz/Ang\n")
 		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
 		for jax in range(nm):
 			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,0,1])
 		f.close()
 		# write data on file
 		file_name = "Dtensor_yy"
 		out_file = "{}".format(out_dir + '/' + file_name)
-		f.write("# jax          THz/Ang\n")
 		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
 		for jax in range(nm):
 			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,1,1])
 		f.close()
@@ -206,8 +207,8 @@ class gradient_ZFS:
 		# write data on file
 		file_name = "Dtensor_yz"
 		out_file = "{}".format(out_dir + '/' + file_name)
-		f.write("# jax          THz/Ang\n")
 		f = open(out_file, 'w')
+		f.write("# jax          THz/Ang\n")
 		for jax in range(nm):
 			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,1,2])
 		f.close()
@@ -219,6 +220,7 @@ class gradient_ZFS:
 		for jax in range(nm):
 			f.write("%d          " % (jax+1) + "%.10f\n" % self.U_gradD_U[jax,2,2])
 		f.close()
+	#
 	# method
 	# set grad D
 	def set_grad_D(self):

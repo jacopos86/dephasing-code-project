@@ -64,7 +64,7 @@ elif calc_type == "--spin":
         calc_type3 = sys.argv[3]
         # case 1) -> ZFS
         # case 2) -> HFI
-        a = int(sys.argv[4])
+        a = int(sys.argv[5])
         # action -> sys.argv[4]
         # 1 -> no ph / atoms resolved calculation
         # 2 -> atoms resolved calculation
@@ -92,11 +92,24 @@ elif calc_type == "--spin":
             sys.exit(1)
         if calc_type3 == "--zfs":
             # read input file
-            input_file = sys.argv[5]
+            calc_type4 = sys.argv[4]
+            input_file = sys.argv[6]
             input_params = data_input()
             input_params.read_data(input_file)
             # compute auto correl. function first
-            compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved)
+            if calc_type4 == "--debug":
+                compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, True, False)
+            elif calc_type4 == "--plot":
+                compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, False, True)
+            elif calc_type4 == "--noplot":
+                compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, False, False)
+            else:
+                print("----------wrong plot/debug flag------------")
+                print("-----------------usage: -------------------")
+                print("--debug -> debug calc. -> check gradZFS----")
+                print("--plot -> extract gradZFS data ------------")
+                print("--noplot -> no data extraction-------------")
+                sys.exit(1)
     elif calc_type2 == "--inhomo":
         print("-------------------------------------------")
         print("------- INHOMOGENEOUS CALCULATION ---------")

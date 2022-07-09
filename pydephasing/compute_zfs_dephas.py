@@ -3,11 +3,12 @@
 # it computes the energy autocorrelation function
 # and return it for further processing
 import numpy as np
+import sys
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs
 from pydephasing.gradient_interactions import gradient_ZFS
 from pydephasing.spin_hamiltonian import spin_hamiltonian
 #
-def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved):
+def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, debug, print_data):
     # input_params: input parameters object
     # at_resolved : True -> compute atom resolved auto correlation
     # ph_resolved : True -> compute ph resolved auto correlation
@@ -32,8 +33,16 @@ def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved):
     gradZFS.set_tensor_gradient(struct_list, struct0, input_params.grad_info, input_params.out_dir)
     # set ZFS gradient in quant. axis coordinates
     gradZFS.set_grad_D_tensor(struct0)
+    # debug mode
+    if debug:
+        gradZFS.plot_tensor_grad_component(struct_list, struct0, input_params.out_dir)
+        sys.exit()
+    # print data
+    if print_data:
+        gradZFS.write_Dtensor_to_file(input_params.out_dir)
     # set up the spin Hamiltonian
     Hss = spin_hamiltonian()
+    sys.exit()
     # set the energy difference gradient
     #Hss.set_grad_deltaEss(self, gradZFS, gradHFI, spin_config, qs1, qs2, nat, lambda_coef)
     # compute auto-correlation function

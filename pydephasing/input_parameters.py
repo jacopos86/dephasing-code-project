@@ -107,7 +107,7 @@ class data_input():
             self.atoms_displ.append(np.array([dx[i], dy[i], dz[i]]))
         # set time array length
         self.nt = int(self.T / self.dt)
-        self.nt2= int(self.T2 / self.dt2)
+        self.nt2= int(self.T2 / self.dt)
         # set time arrays
         self.time = np.linspace(0., self.T, self.nt)
         self.time2 = np.linspace(0., self.T2, self.nt2)
