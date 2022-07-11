@@ -101,6 +101,16 @@ class data_input():
                 Tfin = float(l[2])
             elif l[0] == "dTmp":
                 dTmp = float(l[2])
+            # read quantum states
+            # to be normalized
+            elif l[0] == "qs1":
+                self.qs1 = np.array([complex(l[2]), complex(l[3]), complex(l[4])])
+                nrm = np.sqrt(sum(self.qs1[:] * self.qs1[:].conjugate()))
+                self.qs1[:] = self.qs1[:] / nrm
+            elif l[0] == "qs2":
+                self.qs2 = np.array([complex(l[2]), complex(l[3]), complex(l[4])])
+                nrm = np.sqrt(sum(self.qs2[:] * self.qs2[:].conjugate()))
+                self.qs2[:] = self.qs2[:] / nrm
         f.close()
         # set atom displ. list
         for i in range(len(dx)):

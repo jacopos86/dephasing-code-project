@@ -7,6 +7,7 @@ import sys
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs
 from pydephasing.gradient_interactions import gradient_ZFS
 from pydephasing.spin_hamiltonian import spin_hamiltonian
+from pydephasing.utility_functions import compute_index_to_ia_map, compute_index_to_idx_map
 #
 def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, debug, print_data):
     # input_params: input parameters object
@@ -42,9 +43,12 @@ def compute_zfs_autocorrel_func(input_params, at_resolved, ph_resolved, debug, p
         gradZFS.write_Dtensor_to_file(input_params.out_dir)
     # set up the spin Hamiltonian
     Hss = spin_hamiltonian()
-    sys.exit()
-    # set the energy difference gradient
-    #Hss.set_grad_deltaEss(self, gradZFS, gradHFI, spin_config, qs1, qs2, nat, lambda_coef)
+    # compute index maps
+    index_to_ia_map = compute_index_to_ia_map(nat)
+    index_to_idx_map = compute_index_to_idx_map(nat)
+    # set the energy difference gradient 
+    # F = <1|S Grad D S|1> - <0|S Grad D S|0>
+    F_ax = Hss.set_grad_deltaEzfs(gradZFS, input_params.qs1, input_params.qs2, nat)
+    #
     # compute auto-correlation function
-    acf = autocorrelation_function(at_resolved, ph_resolved, nat, input_params)
-    acf.compute_autocorrel_func(input_params)
+    # procedure

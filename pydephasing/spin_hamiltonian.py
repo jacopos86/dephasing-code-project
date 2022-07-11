@@ -63,17 +63,6 @@ class spin_hamiltonian:
 		self.Sx[:,:] = (self.Splus[:,:] + self.Sminus[:,:]) / 2.
 	def set_Sy(self):
 		self.Sy[:,:] = (self.Splus[:,:] - self.Sminus[:,:]) / (2.*1j)
-	def set_D_coef(self, qs):
-		I = np.identity(3)
-		A = np.matmul(self.Sz, self.Sz) - self.s * (self.s + 1) / 3 * I
-		r = np.dot(A, qs)
-		E_D = np.dot(qs.conjugate(), r)
-		return E_D.real
-	def set_E_coef(self, qs):
-		A = np.matmul(self.Sx, self.Sx) - np.matmul(self.Sy, self.Sy)
-		r = np.dot(A, qs)
-		E_E = np.dot(qs.conjugate(), r)
-		return E_E.real
 	def set_gD_coef(self, gradZFS, nat, qs):
 		# Hss = S gradD S
 		E_gD = np.zeros(3*nat)
@@ -117,59 +106,23 @@ class spin_hamiltonian:
 		r = np.dot(self.Sz, qs)
 		E_A[2] = np.dot(qs.conjugate(), r).real
 		return E_A
-	def set_grad_Ess(self, gradZFS, gradHFI, spin_config, qs, nat, lambda_coef):
-		# compute grad Ess
-		# gradient of the energy of the spin system
-		self.grad_Ess = np.zeros(3*nat)
-		#
-		# compute : grad D < qs | S gradD S | qs >
-		#
-		E_gD = self.set_gD_coef(gradZFS, nat, qs)
-		self.grad_Ess[:] = self.grad_Ess[:] + lambda_coef[0] * E_gD[:]
-		#
-		# compute : \sum_i^N I_i grad Ahfi(i) < qs | S | qs >
-		#
-		E_A = self.set_A_coef(qs)
-		for isp in range(spin_config.nsp):
-			Ii = spin_config.nuclear_spins[isp]['I']
-			aa = spin_config.nuclear_spins[isp]['site']
-			for jax in range(3*nat):
-				# gradient Ahfi
-				gax_Ahfi = np.zeros((3,3))
-				gax_Ahfi[:,:] = gradHFI.gradAhfi[jax,aa-1,:,:]
-				# matrix product
-				gAS = np.dot(gax_Ahfi, E_A)
-				self.grad_Ess[jax] = self.grad_Ess[jax] + lambda_coef[1] * np.dot(Ii, gAS)
-		# THz / Ang units (energy)
-		self.grad_Ess[:] = self.grad_Ess[:] * 2.*np.pi
-	def set_grad_deltaEss(self, gradZFS, gradHFI, spin_config, qs1, qs2, nat, lambda_coef):
-		# compute grad delta Ess
+	# set ZFS energy gradient
+	def set_grad_deltaEzfs(self, gradZFS, qs1, qs2, nat):
+		# compute grad delta Ezfs
 		# gradient of the spin state energy difference
-		self.grad_deltaEss = np.zeros(3*nat)
+		grad_deltaEzfs = np.zeros(3*nat)
 		#
-		# compute : grad D < qs | S gradD S | qs >
+		# compute : < qs1 | S gradD S | qs1 > - < qs2 | S gradD S | qs2 >
 		#
 		E_gD1 = self.set_gD_coef(gradZFS, nat, qs1)
 		E_gD2 = self.set_gD_coef(gradZFS, nat, qs2)
-		self.grad_deltaEss[:] = self.grad_deltaEss[:] + lambda_coef[0] * (E_gD1[:] - E_gD2[:])
-		#
-		# compute : \sum_i^N I_i grad Ahfi(i) < qs | S | qs >
-		#
-		E_A1 = self.set_A_coef(qs1)
-		E_A2 = self.set_A_coef(qs2)
-		dE_A = E_A1 - E_A2
-		for isp in range(spin_config.nsp):
-			Ii = spin_config.nuclear_spins[isp]['I']
-			aa = spin_config.nuclear_spins[isp]['site']
-			for jax in range(3*nat):
-				# gradient Ahfi
-				gax_Ahfi = np.zeros((3,3))
-				gax_Ahfi[:,:] = gradHFI.gradAhfi[jax,aa-1,:,:]
-				# product
-				gAS = np.dot(gax_Ahfi, dE_A)
-				self.grad_deltaEss[jax] = self.grad_deltaEss[jax] + lambda_coef[1] * np.dot(Ii, gAS)
+		grad_deltaEzfs[:] = grad_deltaEzfs[:] + (E_gD1[:] - E_gD2[:])
 		# THz / Ang units (energy)
-		self.grad_deltaEss[:] = self.grad_deltaEss[:] * 2.*np.pi
+		# add 2pi factor
+		grad_deltaEzfs[:] = grad_deltaEzfs[:] * 2.*np.pi
+		return grad_deltaEzfs
+	# set HFI energy gradient
+	# set time array
 	def set_time(self, dt, T):
 		# set time in ps units
 		# for spin vector evolution
