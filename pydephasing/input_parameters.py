@@ -36,9 +36,6 @@ class data_input():
         self.ntmp = 0
     # read data from file
     def read_data(self, input_file):
-        dx = []
-        dy = []
-        dz = []
         # open input file
         f = open(input_file, 'r')
         lines = f.readlines()
@@ -73,16 +70,6 @@ class data_input():
                 self.yaml_pos_file = l[2]
             elif l[0] == "hdf5_eigen_file":
                 self.h5_eigen_file = l[2]
-            # variables
-            elif l[0] == "dx":
-                for i in range(2, len(l)):
-                    dx.append(float(l[i]))
-            elif l[0] == "dy":
-                for i in range(2, len(l)):
-                    dy.append(float(l[i]))
-            elif l[0] == "dz":
-                for i in range(2, len(l)):
-                    dz.append(float(l[i]))
             # time variables
             elif l[0] == 'T':
                 self.T = float(l[2])
@@ -113,8 +100,13 @@ class data_input():
                 self.qs2[:] = self.qs2[:] / nrm
         f.close()
         # set atom displ. list
-        for i in range(len(dx)):
-            self.atoms_displ.append(np.array([dx[i], dy[i], dz[i]]))
+        for i in range(len(self.pert_dirs)):
+            file_name = self.pert_dirs[i] + "/displ"
+            f = open(file_name, 'r')
+            lines = f.readlines()
+            l = lines[0].split()
+            self.atoms_displ.append(np.array([float(l[0]), float(l[1]), float(l[2])]))
+            f.close()
         # set time array length
         self.nt = int(self.T / self.dt)
         self.nt2= int(self.T2 / self.dt)
@@ -128,3 +120,33 @@ class data_input():
         for it in range(1, self.ntmp):
             self.temperatures[it] = self.temperatures[it-1] + dTmp
     #
+    # prepare data_pre
+    def read_data_pre(self, input_file):
+        # open input file
+        f = open(input_file, 'r')
+        lines = f.readlines()
+        dx = []
+        dy = []
+        dz = []
+        for line in lines:
+            l = line.split()
+            if l[0] == "working_dir":
+                self.out_dir = l[2] + '/'
+            elif l[0] == "unpert_data_dir":
+                self.unpert_dir = l[2]
+            elif l[0] == "dir_first_order_displ":
+                for i in range(2, len(l)):
+                    self.pert_dirs.append(l[i])
+            elif l[0] == "dx":
+                for i in range(2, len(l)):
+                    dx.append(float(l[i]))
+            elif l[0] == "dy":
+                for i in range(2, len(l)):
+                    dy.append(float(l[i]))
+            elif l[0] == "dz":
+                for i in range(2, len(l)):
+                    dz.append(float(l[i]))
+        # set atomic displacements
+        for i in range(len(dx)):
+            self.atoms_displ.append([dx[i], dy[i], dz[i]])
+

@@ -1,8 +1,9 @@
 import sys
-from pydephasing.create_displ_struct_files import gen_poscars
+from pydephasing.create_displ_struct_files import gen_poscars, gen_calc_dirs
 from pydephasing.input_parameters import data_input
 from pydephasing.compute_zfs_dephas import compute_zfs_autocorrel_func
 from pydephasing.compute_exc_dephas import compute_hom_exc_autocorrel_func
+from pydephasing.compute_hfi_dephas import compute_hfi_autocorrel_func
 #
 print("-------------------------------------------") 
 print("-------- START PYDEPHASING PROGRAM --------")
@@ -117,6 +118,7 @@ elif calc_type == "--spin":
             input_params.read_data(input_file)
             # start auto correlation function
             # calculation
+            compute_hfi_autocorrel_func(input_params, at_resolved, ph_resolved)
     elif calc_type2 == "--inhomo":
         print("-------------------------------------------")
         print("------- INHOMOGENEOUS CALCULATION ---------")
@@ -126,10 +128,16 @@ elif calc_type == "--init":
     # read data file
     input_file = sys.argv[2]
     input_params = data_input()
-    input_params.read_data(input_file)
+    input_params.read_data_pre(input_file)
     print("------- BUILD DISPLACED STRUCTURES --------")
     gen_poscars(input_params)
     print("-------------------------------------------")
+    print("------- BUILD CALCULATION DIRECTORY -------")
+    gen_calc_dirs(input_params)
+    print("-------------------------------------------")
+elif calc_type == "--post":
+    # post process output data from VASP
+    input_file = sys.argv[2]
 else:
     print("-------------------------------------------")
     print("------ CALC_TYPE FLAG NOT RECOGNIZED ------")

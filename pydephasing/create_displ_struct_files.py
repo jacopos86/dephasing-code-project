@@ -21,3 +21,8 @@ def gen_poscars(input_params):
         # delete structure object
         del displ_struct
     print("---------- POSCAR FILES WRITTEN -----------")
+#
+def gen_calc_dirs(input_params):
+    print("-------------------------------------------")
+    print("------- SET UP CALCULATIONS ---------------")
+    print("-------------------------------------------")

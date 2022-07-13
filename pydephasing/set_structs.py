@@ -150,6 +150,14 @@ class DisplacedStructs:
 		self.dx = dr[0]
 		self.dy = dr[1]
 		self.dz = dr[2]
+		# write data on file
+		file_name = self.out_dir + "/displ"
+		f = open(file_name, 'w')
+		f.write("{}".format(self.dx) + "    ")
+		f.write("{}".format(self.dy) + "    ")
+		f.write("{}".format(self.dz) + "    ")
+		f.write("Ang\n")
+		f.close()
 	# generate new displaced structures
 	def build_atom_displ_structs(self, struct_unprt):
 		# struct -> unperturbed atomic structure
