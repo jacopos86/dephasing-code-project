@@ -135,6 +135,26 @@ class UnpertStruct:
 			if len(l) == 6 and l[0] == "free" and l[1] == "energy" and l[2] == "TOTEN":
 				E = float(l[4])      # eV
 		self.E = E
+	### read forces from outcar
+	def read_forces(self):
+		FF = np.zeros((self.nat,3))
+		# read file
+		f = open(self.ipath+"OUTCAR")
+		lines = f.readlines()
+		for i in range(len(lines)):
+			l = lines[i].split()
+			if len(l) == 3 and l[0] == "POSITION" and l[1] == "TOTAL-FORCE":
+				j = i+2
+				for k in range(j, j+self.nat):
+					l2 = lines[k].split()
+					F = np.zeros(3)
+					# set force
+					F[0] = float(l2[3])
+					F[1] = float(l2[4])
+					F[2] = float(l2[5])
+					# eV / Ang
+					FF[k-j,:] = F[:]
+		return FF
 #
 #  displaced structures class
 #  prepare the VASP displacement calculation
@@ -248,3 +268,125 @@ class DisplacedStructs:
 			poscar.write_file(filename="{}".format(self.out_dir+file_name), direct=direct,
 				vasp4_compatible=vasp4_compatible, significant_figures=significant_figures)
 #
+# 2nd order displaced structure
+# class
+#
+class DisplacedStructures2ndOrder:
+	def __init__(self, out_dir, outcars_dir=''):
+		self.out_dir = out_dir + '/'
+		if not os.path.exists(out_dir):
+			os.makedirs(out_dir)
+		self.outcars_dir = outcars_dir
+	# set atomic displacement (angstrom)
+	def atom_displ(self, dr=np.array([0.1, 0.1, 0.1])):
+		self.dx = dr[0]
+		self.dy = dr[1]
+		self.dz = dr[2]
+		self.dr = np.array([self.dx, self.dy, self.dz])
+		# write data on file
+		file_name = self.out_dir + "/displ"
+		f = open(file_name, 'w')
+		f.write("{}".format(self.dx) + "    ")
+		f.write("{}".format(self.dy) + "    ")
+		f.write("{}".format(self.dz) + "    ")
+		f.write("Ang\n")
+		f.close()
+	# build atoms displ. structures
+	def build_atom_displ_structs(self, struct_unprt, neigh_shell=2):
+		# unpert. atomic structure
+		struct_dict = struct_unprt.struct.as_dict()
+		atoms_key = list(struct_dict.keys())[4]
+		lattice_key = list(struct_dict.keys())[3]
+		charge_key = list(struct_dict.keys())[2]
+		unit_cell_key = list(struct_dict[lattice_key].keys())[0]
+		# unit cell -> angstrom units
+		self.unit_cell = np.array(struct_dict[lattice_key][unit_cell_key])
+		# charge
+		self.charge = struct_dict[charge_key]
+		# list of atoms dictionary
+		atoms = list(struct_dict[atoms_key])
+		# set species list
+		self.species = []
+		species_key = list(atoms[0].keys())[0]
+		element_key = list(atoms[0][species_key][0].keys())[0]
+		for ia in range(struct_unprt.nat):
+			self.species.append(atoms[ia][species_key][0][element_key])
+		# extract atomic cartesian coordinates
+		coord_xyz_keys = list(atoms[0].keys())[2]
+		atoms_cart_coords = np.zeros((struct_unprt.nat,3))
+		coord_abc_keys = list(atoms[0].keys())[1]
+		atoms_abc_coords = np.zeros((struct_unprt.nat,3))
+		for ia in range(struct_unprt.nat):
+			abc_coord_ia = atoms[ia][coord_abc_keys]
+			atoms_abc_coords[ia,:] = abc_coord_ia[:]
+			xyz_coord_ia = atoms[ia][coord_xyz_keys]
+			atoms_cart_coords[ia,:] = xyz_coord_ia[:]
+		# first find distance to first atoms layer
+		dnn = 10.        # ang
+		dist = np.zeros((struct_unprt.nat,struct_unprt.nat))
+		for ia in range(struct_unprt.nat):
+			Ra = np.zeros(3)
+			Ra[:] = atoms_abc_coords[ia,:]
+			for ib in range(ia, struct_unprt.nat):
+				Rb = np.zeros(3)
+				Rb[:] = atoms_abc_coords[ib,:]
+				d = np.zeros(3)
+				for j in range(3):
+					d[j] = abs(Ra[j] - Rb[j])
+					if d[j] > 0.5:
+						d[j] = 1. - d[j]
+				dnsq = d[0]**2 + d[1]**2 + d[2]**2
+				dist[ia,ib] = np.sqrt(dnsq)
+				if dist[ia,ib] > 0. and dist[ia,ib] < dnn:
+					dnn = dist[ia,ib]
+		# list atom pairs
+		list_atom_pairs = []
+		for ia in range(struct_unprt.nat):
+			for ib in range(ia,struct_unprt.nat):
+				if dist[ia,ib] < neigh_shell * dnn:
+					list_atom_pairs.append([ia,ib])
+		# build perturbed structures
+		displ_struct_list = []
+		for il in range(len(list_atom_pairs)):
+			[ia,ib] = list_atom_pairs[il]
+			for ix in range(3):
+				for iy in range(ix,3):
+					# compute atomic structure
+					atoms_cart_displ = np.zeros((struct_unprt.nat,3))
+					atoms_cart_displ[:,:] = atoms_cart_coords[:,:]
+					if ia == ib:
+						if ix == iy:
+							atoms_cart_displ[ia,ix] = atoms_cart_coords[ia,ix] + 2.*self.dr[ix]
+						else:
+							atoms_cart_displ[ia,ix] = atoms_cart_coords[ia,ix] + self.dr[ix]
+							atoms_cart_displ[ia,iy] = atoms_cart_coords[ia,iy] + self.dr[iy]
+					else:
+						atoms_cart_displ[ia,ix] = atoms_cart_coords[ia,ix] + self.dr[ix]
+						atoms_cart_displ[ib,iy] = atoms_cart_coords[ib,iy] + self.dr[iy]
+					# set new structure
+					struct = Structure(lattice=self.unit_cell, species=self.species, coords=atoms_cart_displ,
+						charge=self.charge, validate_proximity=True, to_unit_cell=True, coords_are_cartesian=True)
+					displ_struct_list.append([str(ia+1), str(ix+1), str(ib+1), str(iy+1), struct])
+		# set up dictionary
+		self.displ_structs = []
+		keys = ['ia', 'ix', 'ib', 'iy', 'structure']
+		for displ_struct in displ_struct_list:
+			self.displ_structs.append(dict(zip(keys, displ_struct)))
+	# write structures on file
+	def write_structs_on_file(self, significant_figures=16, direct=True, vasp4_compatible=False):
+		# open summary file
+		f = open(self.out_dir+"summary", 'w')
+		for displ_struct in self.displ_structs:
+			struct = displ_struct['structure']
+			ia = displ_struct['ia']
+			ix = displ_struct['ix']
+			ib = displ_struct['ib']
+			iy = displ_struct['iy']
+			# prepare file
+			file_name = "POSCAR-" + str(ia) + "-" + str(ix) + "-" + str(ib) + "-" + str(iy)
+			poscar = Poscar(struct)
+			poscar.write_file(filename="{}".format(self.out_dir+file_name), direct=direct,
+				vasp4_compatible=vasp4_compatible, significant_figures=significant_figures)
+			# write summary on file
+			f.write( str(ia) + "-" + str(ix) + "-" + str(ib) + "-" + str(iy) + "\n" )
+		f.close()

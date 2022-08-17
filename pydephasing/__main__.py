@@ -1,5 +1,5 @@
 import sys
-from pydephasing.create_displ_struct_files import gen_poscars, gen_calc_dirs
+from pydephasing.create_displ_struct_files import gen_poscars, gen_2ndorder_poscar
 from pydephasing.input_parameters import data_input
 from pydephasing.compute_zfs_dephas import compute_zfs_autocorrel_func
 from pydephasing.compute_exc_dephas import compute_hom_exc_autocorrel_func
@@ -60,7 +60,7 @@ elif calc_type == "--spin":
     if calc_type2 == "--homo":
         print("-------------------------------------------")
         print("-------- HOMOGENEOUS CALCULATION ----------")
-        print("------------ COMPUTING T2 -----------------")
+        print("------------ COMPUTING T2* ----------------")
         print("-------------------------------------------")
         calc_type3 = sys.argv[3]
         # case 1) -> ZFS
@@ -126,14 +126,15 @@ elif calc_type == "--spin":
         print("-------------------------------------------")
 elif calc_type == "--init":
     # read data file
-    input_file = sys.argv[2]
+    order = sys.argv[2]
+    input_file = sys.argv[3]
     input_params = data_input()
     input_params.read_data_pre(input_file)
     print("------- BUILD DISPLACED STRUCTURES --------")
-    gen_poscars(input_params)
-    print("-------------------------------------------")
-    print("------- BUILD CALCULATION DIRECTORY -------")
-    gen_calc_dirs(input_params)
+    if int(order) == 1:
+        gen_poscars(input_params)
+    else:
+        gen_2ndorder_poscar(input_params)
     print("-------------------------------------------")
 elif calc_type == "--post":
     # post process output data from VASP

@@ -6,6 +6,9 @@
 import numpy as np
 import sys
 from pydephasing.set_structs import UnpertStruct, DisplacedStructs
+from pydephasing.spin_hamiltonian import spin_hamiltonian
+from pydephasing.utility_functions import compute_index_to_ia_map, compute_index_to_idx_map
+from pydephasing.gradient_interactions import gradient_HFI
 #
 def compute_hfi_autocorrel_func(input_params, at_resolved, ph_resolved):
     # input_params -> input parameters object
@@ -28,4 +31,14 @@ def compute_hfi_autocorrel_func(input_params, at_resolved, ph_resolved):
         displ_struct.atom_displ(input_params.atoms_displ[i])    # ang
         # append to list
         struct_list.append(displ_struct)
-    sys.exit()
+    # set spin Hamiltonian
+    Hss = spin_hamiltonian()
+    # set index maps
+    index_to_ia_map = compute_index_to_ia_map(nat)
+    index_to_idx_map = compute_index_to_idx_map(nat)
+    # compute grad Ahfi
+    gradHFI = gradient_HFI(nat)
+    # set the gradient
+    gradHFI.set_grad_Ahfi(struct_list, nat)
+    # set gradient in quant. vector basis
+    gradHFI.set_grad_Ahfi_Ddiag_basis(struct0)

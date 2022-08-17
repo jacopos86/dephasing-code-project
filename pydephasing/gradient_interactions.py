@@ -42,6 +42,7 @@ class gradient_ZFS:
 	# read full tensor from outcar
 	def read_outcar_full(self, outcar):
 		# read file
+		print(outcar)
 		f = open(outcar, 'r')
 		lines = f.readlines()
 		for i in range(len(lines)):
@@ -378,6 +379,7 @@ class gradient_HFI:
 class gradient_Eg:
 	def __init__(self,nat):
 		self.gradE = np.zeros(3*nat)
+		self.forces = np.zeros(3*nat)
 	# read outcar file
 	def read_outcar(self, outcar):
 		# read file
@@ -412,3 +414,16 @@ class gradient_Eg:
 				#
 				jax = jax + 1
 		self.gradE[:] = gE[:]
+	# compute forces method
+	def set_forces(self, struct0):
+		# read forces
+		F = struct0.read_forces()
+		# set up local force array
+		nat = struct0.nat
+		# run over atoms
+		for ia in range(nat):
+			self.forces[3*ia]   = F[ia,0]
+			self.forces[3*ia+1] = F[ia,1]
+			self.forces[3*ia+2] = F[ia,2]
+			# eV / ang 
+			# units
