@@ -380,6 +380,7 @@ class gradient_Eg:
 	def __init__(self,nat):
 		self.gradE = np.zeros(3*nat)
 		self.forces = np.zeros(3*nat)
+		self.force_const = np.zeros((3*nat,3*nat))
 	# read outcar file
 	def read_outcar(self, outcar):
 		# read file
@@ -427,3 +428,17 @@ class gradient_Eg:
 			self.forces[3*ia+2] = F[ia,2]
 			# eV / ang 
 			# units
+	# extract force constants
+	def set_force_constants(self, struct0, fc_file):
+		# read force constants
+		Fc = struct0.read_force_const(fc_file)
+		# iterate over atomic index
+		for ia in range(struct0.nat):
+			for ix in range(3):
+				jax = ia*3 + ix
+				for ib in range(struct0.nat):
+					for iy in range(3):
+						jby = ib*3 + iy
+						self.force_const[jax,jby] = Fc[ia,ib,ix,iy]
+		# eV / ang^2
+		# units

@@ -58,6 +58,10 @@ class data_input():
                 self.yaml_pos_file = l[2]
             elif l[0] == "hdf5_eigen_file":
                 self.h5_eigen_file = l[2]
+            elif l[0] == "forc_const_gs":
+                self.gs_fc_file = l[2]
+            elif l[0] == "forc_const_exc":
+                self.exc_fc_file = l[2]
             # time variables
             elif l[0] == 'T':
                 self.T = float(l[2])

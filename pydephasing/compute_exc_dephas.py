@@ -30,16 +30,27 @@ def compute_hom_exc_autocorrel_func(input_params, at_resolved, ph_resolved):
     gradEGS = gradient_Eg(nat)
     # set GS forces
     gradEGS.set_forces(GS)
+    # set force constants
+    gradEGS.set_force_constants(GS, input_params.gs_fc_file)
     #
     # set EXC config. forces
     #
     gradEXC = gradient_Eg(nat)
     # set EXC forces
     gradEXC.set_forces(EXC)
+    #sys.exit()
+    # set force constants
+    #gradEXC.set_force_constants(EXC, input_params.exc_fc_file)
     # gradZPL -> gradEXC - gradEGS
-    gradZPL = np.zeros(3*nat)
-    gradZPL[:] = gradEXC.forces[:] - gradEGS.forces[:]
+    #gradZPL = np.zeros(3*nat)
+    #gradZPL[:] = gradEXC.forces[:] - gradEGS.forces[:]
     # eV / Ang units
+    #
+    # define force constants -> HessZPL
+    #
+    #hessZPL = np.zeros((3*nat,3*nat))
+    #hessZPL[:,:] = gradEXC.force_const[:,:] - gradEGS.force_const[:,:]
+    # eV / Ang^2 units
     #
     # set up auto-correlation functions
     #

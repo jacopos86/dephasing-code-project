@@ -7,6 +7,7 @@ import os
 from pymatgen.io.vasp.inputs import Poscar
 from pymatgen.core.structure import Structure
 import scipy.linalg as la
+import h5py
 #
 #  ground state structure
 #  acquires ground state data
@@ -155,6 +156,20 @@ class UnpertStruct:
 					# eV / Ang
 					FF[k-j,:] = F[:]
 		return FF
+	### read force constants from HDF5 file
+	def read_force_const(self, inp_file):
+		with h5py.File(inp_file, 'r') as f:
+			# list all groups
+			unit_key = list(f.keys())[2]
+			units = list(f[unit_key])
+			print("force const. units: ", units)
+			# extract force constants
+			key = list(f.keys())[1]
+			p2s_map = list(f[key])
+			# force const.
+			key_fc = list(f.keys())[0]
+			Fc = np.array(f[key_fc])
+		return Fc
 #
 #  displaced structures class
 #  prepare the VASP displacement calculation
