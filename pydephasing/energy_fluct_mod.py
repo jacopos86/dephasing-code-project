@@ -104,4 +104,4 @@ class energy_level_fluctuations_ofq:
                     ia = index_to_ia_map[iax] - 1
                     # direct atom coordinates
                     R0 = atoms_dict[ia]['coordinates']
-                    
+                    # run over atom index ja/iy
