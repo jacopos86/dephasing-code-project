@@ -4,6 +4,7 @@
 #  calculations
 #
 import numpy as np
+from pydephasing.phys_constants import min_freq
 #
 class spin_level_fluctuations_ofq:
     # initialization
@@ -104,4 +105,39 @@ class energy_level_fluctuations_ofq:
                     ia = index_to_ia_map[iax] - 1
                     # direct atom coordinates
                     R0 = atoms_dict[ia]['coordinates']
+                    # time array
+                    ft = np.zeros(self.nt)
+                    ft[:] = (cos_wt[:] * np.exp(-1j*2.*np.pi*np.dot(qv, R0))).real
+                    if atom_res or ph_res:
+                        ft2 = np.zeros(self.nt2)
+                        ft2[:] = (cos_wt2[:] * np.exp(-1j*2.*np.pi*np.dot(qv, R0))).real
+                    # run over the temperature list
+                    for iT in range(input_params.ntmp):
+                        # compute energy fluct.
+                        if atom_res:
+                            self.deltaEq_atr[:,ia,iT] = self.deltaEq_atr[:,ia,iT] + ph_ampl.u_ql_ja[im,iax,iT] * ft2[:] * Fax[iax]
+                        if ph_res:
+                            self.deltaEq_phm[:,im,iT] = self.deltaEq_phm[:,im,iT] + ph_ampl.u_ql_ja[im,iax,iT] * ft2[:] * Fax[iax]
+                        self.deltaEq_oft[:,iT] = self.deltaEq_oft[:,iT] + ph_ampl.u_ql_ja[im,iax,iT] * ft[:] * Fax[iax]
                     # run over atom index ja/iy
+                    for jax in range(3*nat):
+                        # atom index ja
+                        ja = index_to_ia_map[jax] - 1
+                        # direct atom coordinate
+                        R0p = atoms_dict[ja]['coordinates']
+                        # time array
+                        gt = np.zeros(self.nt)
+                        gt[:] = (cos_wt[:] * np.exp(-1j*2.*np.pi*np.dot(qv, R0p))).real
+                        if atom_res or ph_res:
+                            gt2 = np.zeros(self.nt2)
+                            gt2[:] = (cos_wt2[:] * np.exp(-1j*2.*np.pi*np.dot(qv, R0p))).real
+                        # run over T list
+                        for iT in range(input_params.ntmp):
+                            # compute 2nd order fluct.
+                            if atom_res:
+                                self.deltaEq_atr[:,ia,iT] = self.deltaEq_atr[:,ia,iT] + 0.5 * ph_ampl.u_ql_ja[im,iax,iT] * ft2[:] * Fc_axby[iax,jax] * gt2[:] * ph_ampl.u_ql_ja[im,jax,iT]
+                            if ph_res:
+                                self.deltaEq_phm[:,im,iT] = self.deltaEq_phm[:,im,iT] + 0.5 * ph_ampl.u_ql_ja[im,iax,iT] * ft2[:] * Fc_axby[iax,jax] * gt2[:] * ph_ampl.u_ql_ja[im,jax,iT]
+                            self.deltaEq_oft[:,iT] = self.deltaEq_oft[:,iT] + 0.5 * ph_ampl.u_ql_ja[im,iax,iT] * ft[:] * Fc_axby[iax,jax] * gt[:] * ph_ampl.u_ql_ja[im,jax,iT]
+# total energy fluct. class
+#class energy_level_fluctuations:
