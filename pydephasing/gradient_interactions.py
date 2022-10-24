@@ -277,7 +277,7 @@ class gradient_HFI:
 		self.gAhfi_xz = []
 		self.gAhfi_yz = []
 	# read outcar file
-	def read_outcar(self, outcar, nat):
+	def read_dipolar_int(self, outcar, nat):
 		# read file
 		f = open(outcar, 'r')
 		lines = f.readlines()
@@ -293,12 +293,43 @@ class gradient_HFI:
 							A[k-j,u] = float(l2[1+u])
 		f.close()
 		return A
+	# read full HFI = dip + FC
+	def read_full_hfi(self, outcar, nat, core=True):
+		A_full = self.read_dipolar_int(outcar, nat)
+		# read file
+		f = open(outcar, 'r')
+		lines = f.readlines()
+		for i in range(len(lines)):
+			l = lines[i].split()
+			# read fermi contact term
+			if len(l) == 6:
+				if l[0] == "ion" and l[5] == "A_tot":
+					A_fc = 0.
+					j = i+2
+					for k in range(j, j+nat):
+						l2 = lines[k].split()
+						if core:
+							A_fc = float(l2[4]) + float(l2[5])
+						else:
+							A_fc = float(l2[5])
+						A_full[k-j,0] = A_full[k-j,0] + A_fc
+						A_full[k-j,1] = A_full[k-j,1] + A_fc
+						A_full[k-j,2] = A_full[k-j,2] + A_fc
+		f.close()
+		return A_full
 	# set Ahfi gradient
-	def set_grad_Ahfi(self, displ_structs, nat):
-		dr = np.array([displ_structs.dx, displ_structs.dy, displ_structs.dz])
-		out_dir = displ_structs.outcars_dir + "/"
+	def set_grad_Ahfi(self, displ_structs, nat, atoms_info, out_dir, core=True):
+		# read data from atoms_info
+		f = open(atoms_info, 'r')
+		lines = f.readlines()
+		self.pert_dict = {}
+		for line in lines:
+			l = line.split()
+			if int(l[0]) == 0 and int(l[1]) == 0:
+				self.default_dir = l[2]
+			else:
+				self.pert_dict[(int(l[0]), int(l[1]))] = l[2]
 		# run over atoms
-		jax = 0
 		for ia in range(nat):
 			gradAxx = np.zeros((nat,3))
 			gradAyy = np.zeros((nat,3))
@@ -307,13 +338,29 @@ class gradient_HFI:
 			gradAxz = np.zeros((nat,3))
 			gradAyz = np.zeros((nat,3))
 			for idx in range(3):
+				# check if (ia,idx) in pert_dirs
+				if (ia+1, idx+1) in self.pert_dict.keys():
+					outcars_dir = self.pert_dict[(ia+1, idx+1)]
+				else:
+					outcars_dir = self.default_dir
+				out_dir_full = ''
+				out_dir_full = out_dir + outcars_dir
+				# look for right displaced struct
+				for displ_struct in displ_structs:
+					if displ_struct.outcars_dir == out_dir_full:
+						dr = np.array([displ_struct.dx, displ_struct.dy, displ_struct.dz])
+						# Ang units
+					else:
+						pass
+				out_dir_full = out_dir_full + "/"
+				# write file names
 				file_name = str(ia+1) + "-" + str(idx+1) + "-1/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
-				As1 = self.read_outcar(outcar, nat)
+				outcar = "{}".format(out_dir_full + file_name)
+				As1 = self.read_full_hfi(outcar, nat, core)
 				#
 				file_name = str(ia+1) + "-" + str(idx+1) + "-2/OUTCAR"
-				outcar = "{}".format(out_dir + file_name)
-				As2 = self.read_outcar(outcar, nat)
+				outcar = "{}".format(out_dir_full + file_name)
+				As2 = self.read_full_hfi(outcar, nat, core)
 				#
 				gradAxx[:,idx] = (As1[:,0] - As2[:,0]) / (2.*dr[idx])
 				gradAyy[:,idx] = (As1[:,1] - As2[:,1]) / (2.*dr[idx])

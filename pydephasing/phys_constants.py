@@ -20,6 +20,6 @@ gamma_e = 2.8*1.E-6               # THz / G
 #
 # nuclear gyromagnetic ratio
 #
-gamma_n = 0.0                     # THz / G
+gamma_n = 1.E-3                   # MHz / G
 # min. frequency
 min_freq = 1.E-4                  # THz

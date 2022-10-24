@@ -85,8 +85,8 @@ class UnpertStruct:
 					self.Ddiag[i] = eig[j]
 					self.Deigv[:,i] = eigv[:,j]
 		# D units -> MHz
-	### read HFI from OUTCAR
-	def read_hfi(self):
+	### read HFI dipolar from OUTCAR
+	def read_hfi_dipolar(self):
 		# read file
 		f = open(self.ipath+"OUTCAR", 'r')
 		lines = f.readlines()
@@ -101,13 +101,36 @@ class UnpertStruct:
 						A[k-j,u] = float(l2[1+u])
 		f.close()
 		return A
+	# read full HFI tensor from OUTCAR
+	def read_hfi_full(self, core=True):
+		A_full = self.read_hfi_dipolar()
+		# read file
+		f = open(self.ipath+"OUTCAR", 'r')
+		lines = f.readlines()
+		for i in range(len(lines)):
+			l = lines[i].split()
+			# read fermi contact term
+			if len(l) == 6 and l[0] == "ion" and l[5] == "A_tot":
+				A_fc = 0.
+				j = i+2
+				for k in range(j, j+self.nat):
+					l2 = lines[k].split()
+					if core:
+						A_fc = float(l2[4]) + float(l2[5])
+					else:
+						A_fc = float(l2[5])
+					A_full[k-j,0] = A_full[k-j,0] + A_fc
+					A_full[k-j,1] = A_full[k-j,1] + A_fc
+					A_full[k-j,2] = A_full[k-j,2] + A_fc
+		f.close()
+		return A_full
 	### set HFI in D diag. basis
-	def set_hfi_Dbasis(self):
+	def set_hfi_Dbasis(self, core=True):
 		self.Ahfi = np.zeros((self.nat,3,3))
 		# set transf. matrix U
 		U = self.Deigv
 		# read Ahfi from outcar
-		ahf = self.read_hfi()
+		ahf = self.read_hfi_full(core)
 		# run over atoms
 		for aa in range(self.nat):
 			A = np.zeros((3,3))

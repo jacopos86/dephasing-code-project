@@ -6,8 +6,10 @@
 #   Hss = D [Sz^2 - S(S+1)/3] + E (Sx^2 - Sy^2) + \sum_i^N I_i Ahfi(i) S
 #
 import numpy as np
-import scipy.linalg as la
+import yaml
 from pydephasing.utility_functions import delta
+from pydephasing.phys_constants import hbar, gamma_e
+from pydephasing.utility_functions import triplet_evolution
 #
 class spin_hamiltonian:
 	#
@@ -122,6 +124,29 @@ class spin_hamiltonian:
 		grad_deltaEzfs[:] = grad_deltaEzfs[:] * 2.*np.pi
 		return grad_deltaEzfs
 	# set HFI energy gradient
+	def set_grad_deltaEhfi(self, gradHFI, nucl_spins_conf, qs1, qs2, nat):
+		# compute grad delta Ehfi
+		# gradient of spin states energy diff.
+		grad_deltaEhfi = np.zeros(3*nat)
+		#
+		# compute : < qs1 | S gradA_HFI I | qs1 > - < qs2 | S gradA_HFI I | qs2 >
+		#
+		E_gA1 = self.set_A_coef(qs1)
+		E_gA2 = self.set_A_coef(qs2)
+		dE_gA = E_gA1 - E_gA2
+		# run over spin index
+		for isp in range(len(nucl_spins_conf)):
+			Ii = nucl_spins_conf[isp]['I']
+			aa = nucl_spins_conf[isp]['site']
+			# run over (ax) index
+			for jax in range(3*nat):
+				# gradient Ahfi
+				gax_Ahfi = np.zeros((3,3))
+				gax_Ahfi[:,:] = gradHFI.gradAhfi[jax,aa-1,:,:]
+				# THz / ang units
+				gAS = np.dot(gax_Ahfi, dE_gA)
+				grad_deltaEhfi[jax] = grad_deltaEhfi[jax] + np.dot(Ii, gAS)
+		return grad_deltaEhfi
 	# set time array
 	def set_time(self, dt, T):
 		# set time in ps units
@@ -132,30 +157,33 @@ class spin_hamiltonian:
 		#
 		nt = int(T / (dt/2.))
 		self.time_dense = np.linspace(0., T, nt)
+	# compute magnetization array
 	def set_magnetization(self):
 		# compute magnet. expect. value
 		nt = len(self.time)
 		self.Mt = np.zeros((3,nt))
 		# run on t
 		for i in range(nt):
-			vx = np.dot(self.Sx, self.psit[:,i])
-			self.Mt[0,i] = np.dot(self.psit[:,i].conjugate(), vx).real
+			vx = np.dot(self.Sx, self.tripl_psit[:,i])
+			self.Mt[0,i] = np.dot(self.tripl_psit[:,i].conjugate(), vx).real
 			#
-			vy = np.dot(self.Sy, self.psit[:,i])
-			self.Mt[1,i] = np.dot(self.psit[:,i].conjugate(), vy).real
+			vy = np.dot(self.Sy, self.tripl_psit[:,i])
+			self.Mt[1,i] = np.dot(self.tripl_psit[:,i].conjugate(), vy).real
 			#
-			vz = np.dot(self.Sz, self.psit[:,i])
-			self.Mt[2,i] = np.dot(self.psit[:,i].conjugate(), vz).real
-	def compute_spin_vector_evol(self, psi0, B):
+			vz = np.dot(self.Sz, self.tripl_psit[:,i])
+			self.Mt[2,i] = np.dot(self.tripl_psit[:,i].conjugate(), vz).real
+	# compute spin vector
+	def compute_spin_vector_evol(self, struct0, psi0, B):
 		# initial state : psi0
 		# magnetic field : B (gauss)
 		# H = SDS + gamma_e B S
 		# 1) compute SDS
-		self.set_SDS()
+		self.set_SDS(struct0)
 		# n. time steps
 		nt = len(self.time_dense)
 		Ht = np.zeros((3,3,nt), dtype=np.complex128)
 		# 2) set Ht in eV units
+		# run over time steps
 		for i in range(nt):
 			Ht[:,:,i] = Ht[:,:,i] + hbar * self.SDS[:,:]
 			# eV
@@ -167,3 +195,29 @@ class spin_hamiltonian:
 		self.tripl_psit = triplet_evolution(Ht, psi0, dt)
 		# set magnetization vector Mt
 		self.set_magnetization()
+	# write spin vector on file
+	def write_spin_vector_on_file(self, out_dir):
+		# time steps
+		nt = len(self.time)
+		# write on file
+		namef = out_dir + "/spin-vector.yml"
+		# set dictionary
+		dict = {'time' : 0, 'Mt' : 0}
+		dict['time'] = self.time
+		dict['Mt'] = self.Mt
+		# save data
+		with open(namef, 'w') as out_file:
+			yaml.dump(dict, out_file)
+		# mag. vector
+		namef = out_dir + "/occup-prob"
+		# set dictionary
+		dict2 = {'time' : 0, 'occup' : 0}
+		occup = np.zeros((3,nt))
+		# run over t
+		for i in range(nt):
+			occup[:,i] = np.dot(self.tripl_psit[:,i].conjugate(), self.tripl_psit[:,i]).real
+		dict2['time'] = self.time
+		dict2['occup']= occup
+		# save data
+		with open(namef, 'w') as out_file:
+			yaml.dump(dict2, out_file)

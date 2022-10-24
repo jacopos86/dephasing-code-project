@@ -1,5 +1,5 @@
 import numpy as np
-from math import exp
+from math import exp, atan2
 from pydephasing.phys_constants import eps, kb, hbar
 import yaml
 import sys
@@ -159,3 +159,12 @@ def extract_atoms_coords(input_params, nat):
 		print("Value error exception: wrong number of atoms...")
 		sys.exit(1)
 	return atoms_dict
+#
+# function 11) cart -> sph. coordinates transf.
+#
+def cart2sph(v):
+	xysq = v[0]**2 + v[1]**2
+	r = np.sqrt(xysq + v[2]**2)       # r
+	th = atan2(v[2], np.sqrt(xysq))   # theta
+	phi= atan2(v[1], v[0])            # phi
+	return [r, th, phi]
